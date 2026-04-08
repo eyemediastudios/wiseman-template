@@ -149,34 +149,37 @@ export default function MapSearch({
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
+    // Pre-inject Leaflet CSS before map init
+    if (!document.querySelector('link[href*="leaflet"]')) {
+      const link = document.createElement("link");
+      link.rel = "stylesheet";
+      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
+      document.head.appendChild(link);
+    }
+
     const initMap = async () => {
-      const L = await import("leaflet");
-      LRef.current = L;
+      try {
+        const L = await import("leaflet");
+        LRef.current = L;
 
-      if (!document.querySelector('link[href*="leaflet"]')) {
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-        document.head.appendChild(link);
+        const map = L.map(mapRef.current!, {
+          scrollWheelZoom: false,
+          zoomControl: true,
+        }).setView([mapCenter.lat, mapCenter.lng], mapZoom);
+
+        L.control.zoom({ position: "topright" }).addTo(map);
+
+        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+          maxZoom: 19,
+          subdomains: "abcd",
+        }).addTo(map);
+
+        mapInstance.current = map;
+        setMapReady(true);
+      } catch (err) {
+        console.error("Map failed to load:", err);
       }
-
-      const map = L.map(mapRef.current!, {
-        scrollWheelZoom: false,
-        zoomControl: true,
-      }).setView([mapCenter.lat, mapCenter.lng], mapZoom);
-
-      // Zoom control top-right
-      L.control.zoom({ position: "topright" }).addTo(map);
-
-      // Clean tile layer
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
-        maxZoom: 19,
-        subdomains: "abcd",
-      }).addTo(map);
-
-      mapInstance.current = map;
-      setMapReady(true);
     };
 
     initMap();
