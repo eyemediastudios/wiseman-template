@@ -149,7 +149,7 @@ export default function MapSearch({
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
-    // Pre-inject Leaflet CSS before map init
+    // Inject Leaflet CSS synchronously before Leaflet renders
     if (!document.querySelector('link[href*="leaflet"]')) {
       const link = document.createElement("link");
       link.rel = "stylesheet";
@@ -157,7 +157,8 @@ export default function MapSearch({
       document.head.appendChild(link);
     }
 
-    const initMap = async () => {
+    // Wait one tick for the CSS to parse, then init the map
+    const timer = setTimeout(async () => {
       try {
         const L = await import("leaflet");
         LRef.current = L;
@@ -167,12 +168,13 @@ export default function MapSearch({
           zoomControl: true,
         }).setView([mapCenter.lat, mapCenter.lng], mapZoom);
 
-        L.control.zoom({ position: "topright" }).addTo(map);
+        if (map.zoomControl) {
+          map.zoomControl.setPosition("topright");
+        }
 
-        L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
-          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a> &copy; <a href="https://carto.com/">CARTO</a>',
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
           maxZoom: 19,
-          subdomains: "abcd",
         }).addTo(map);
 
         mapInstance.current = map;
@@ -180,11 +182,10 @@ export default function MapSearch({
       } catch (err) {
         console.error("Map failed to load:", err);
       }
-    };
-
-    initMap();
+    }, 0);
 
     return () => {
+      clearTimeout(timer);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
