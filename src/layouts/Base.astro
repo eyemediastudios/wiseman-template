@@ -42,6 +42,7 @@ const secondaryColour = settings?.secondaryColour || "#c9a84c";
     {settings?.favicon?.asset?.url && (
       <link rel="icon" type="image/png" href={settings.favicon.asset.url} />
     )}
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style set:html={`
       :root {
         --color-brand: ${primaryColour};

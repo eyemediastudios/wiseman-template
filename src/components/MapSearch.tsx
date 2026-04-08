@@ -149,16 +149,7 @@ export default function MapSearch({
   useEffect(() => {
     if (!mapRef.current || mapInstance.current) return;
 
-    // Inject Leaflet CSS synchronously before Leaflet renders
-    if (!document.querySelector('link[href*="leaflet"]')) {
-      const link = document.createElement("link");
-      link.rel = "stylesheet";
-      link.href = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css";
-      document.head.appendChild(link);
-    }
-
-    // Wait one tick for the CSS to parse, then init the map
-    const timer = setTimeout(async () => {
+    const initMap = async () => {
       try {
         const L = await import("leaflet");
         LRef.current = L;
@@ -182,10 +173,11 @@ export default function MapSearch({
       } catch (err) {
         console.error("Map failed to load:", err);
       }
-    }, 0);
+    };
+
+    initMap();
 
     return () => {
-      clearTimeout(timer);
       if (mapInstance.current) {
         mapInstance.current.remove();
         mapInstance.current = null;
